@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silk - Sign Up</title>
+    <link rel="stylesheet" href="/index.3a01df49.css">
+</head>
+<body class="login-page"> <!-- Same class for centering and styling -->
+
+    <!-- Main content for sign-up page -->
+    <div class="login-container"> <!-- This container will be the same as the login -->
+        <!-- Direct to Dashboard link -->
+        <div class="direct-dashboard-link">
+            <a href="/dashboard.html">Direct to Dashboard</a>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div class="login-box">
+            <h2>Sign Up for Silk</h2>
+            <form id="signup-form">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required="">
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" required="">
+
+                <label for="confirm-password">Confirm Password:</label>
+                <input type="password" id="confirm-password" required="">
+
+                <button type="submit">Sign Up</button>
+            </form>
+            <p>Already have an account? <a href="/index.html">Login</a></p>
+        </div>
+    </div>
+
+    <script>document.addEventListener("DOMContentLoaded", function() {
+    const loginLink = document.querySelector("a[href='index.html']");
+    loginLink.addEventListener("click", function() {
+        // Direct to login page
+        window.location.href = "index.html"; // Link to the login page
+    });
+});
+
+</script>
+<script src="/signup.81ad8518.js"></script></body>
+</html>

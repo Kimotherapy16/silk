@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silk - Login</title>
+    <link rel="stylesheet" href="/index.3a01df49.css">
+</head>
+<body class="login-page">
+
+    <!-- Main content for login page -->
+    <div class="login-container">
+        <!-- Direct to Dashboard link -->
+        <div class="direct-dashboard-link">
+            <a href="/dashboard.html">Direct to Dashboard</a>
+        </div>
+
+        <!-- Login Form -->
+        <div class="login-box">
+            <h2>Login to Silk</h2>
+            <form id="login-form">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required="">
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" required="">
+
+                <button type="submit">Login</button>
+                
+            </form>
+            <p>Don't have an account? <a href="/signup.html" id="signup-link">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.16.0/dist/supabase.min.js"></script>
+    <script>// Initialize Supabase client (use your own URL and anon key)
+const supabaseUrl = "https://your-projechttps://dihzhshukgwduxatoyrj.supabase.cot-url.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// DOMContentLoaded event listener
+document.addEventListener("DOMContentLoaded", function() {
+    const loginForm = document.getElementById("login-form");
+    // Handle form submission
+    loginForm.addEventListener("submit", async function(event) {
+        event.preventDefault(); // Prevent form from submitting the default way
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        // Attempt to log in the user
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        if (error) alert("Login failed: " + error.message); // Handle login failure
+        else // Redirect to the dashboard page if successful
+        window.location.href = "dashboard.html";
+    });
+    const signupLink = document.getElementById("signup-link");
+    signupLink.addEventListener("click", function(event) {
+        event.preventDefault(); // Prevent the default link behavior
+        window.location.href = "signup.html"; // Direct to signup page
+    });
+});
+
+</script>
+<script src="/silk.3464ddca.js"></script></body>
+</html>

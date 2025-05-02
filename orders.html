@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Silk | Orders</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .navbar {
+      background-color: #1f1f1f;
+    }
+
+    .navbar-brand {
+      color: #00bcd4;
+      font-weight: bold;
+    }
+
+    .navbar-brand:hover {
+      color: #00acc1;
+    }
+
+    .nav-link {
+      color: white;
+    }
+
+    .nav-link:hover {
+      color: #00bcd4;
+    }
+
+    .search-bar, .filter-status {
+      background-color: #1f1f1f;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .order-card {
+      background-color: #1f1f1f;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .order-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 15px rgba(0, 188, 212, 0.4);
+    }
+
+    .form-control, .form-select {
+      background-color: #2b2b2b;
+      color: white;
+      border: none;
+    }
+
+    .form-control:focus, .form-select:focus {
+      border-color: #00bcd4;
+      box-shadow: 0 0 0 0.2rem rgba(0,188,212,0.25);
+    }
+
+    .order-details {
+      background-color: #2b2b2b;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+
+    .order-items {
+      margin-bottom: 1rem;
+    }
+
+    .order-item {
+      margin-bottom: 0.5rem;
+    }
+
+    .order-status {
+      background-color: #00bcd4;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark px-3">
+    <a class="navbar-brand" href="seller-dashboard.html">Silk</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="seller-dashboard.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="add-product.html">Add Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="product.html">My Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
+        <li class="nav-item"><a class="nav-link" href="pos.html">Manual POS</a></li>
+        <li class="nav-item"><a class="nav-link" href="seller-profile.html">Profile</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="container mt-4">
+    <!-- Search and Filter Section -->
+    <div class="search-bar d-flex gap-3 flex-wrap">
+      <input type="text" class="form-control w-100 w-md-50" placeholder="Search by customer or order ID...">
+      <select class="form-select w-100 w-md-25">
+        <option value="">Sort by</option>
+        <option value="date-asc">Date: Oldest First</option>
+        <option value="date-desc">Date: Newest First</option>
+        <option value="status-pending">Status: Pending</option>
+        <option value="status-shipped">Status: Shipped</option>
+        <option value="status-delivered">Status: Delivered</option>
+      </select>
+      <select class="form-select w-100 w-md-25">
+        <option value="">Filter by Status</option>
+        <option value="pending">Pending</option>
+        <option value="shipped">Shipped</option>
+        <option value="delivered">Delivered</option>
+      </select>
+    </div>
+
+    <!-- Order List -->
+    <div class="row g-4" id="order-list">
+      <!-- Example Order -->
+      <div class="col-md-4">
+        <div class="order-card" onclick="window.location.href='order-details.html?id=1'">
+          <h5>Order #12345</h5>
+          <p class="text-muted">Customer: John Doe</p>
+          <p class="text-muted">Status: <span class="order-status">Pending</span></p>
+          <p class="text-muted">Date: 2025-05-01</p>
+        </div>
+      </div>
+   
+    </div>
+  </div>
+
+</body>
+</html>
