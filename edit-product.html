@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Product</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      padding: 20px;
+    }
+    input, textarea, select {
+      background-color: #1e1e1e;
+      color: white;
+      border: 1px solid #444;
+    }
+    img {
+      max-width: 300px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Edit Product</h2>
+    <form id="editProductForm">
+      <div class="mb-3">
+        <label class="form-label">Product Name</label>
+        <input type="text" id="productName" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Price (₱)</label>
+        <input type="number" id="productPrice" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea id="productDescription" class="form-control"></textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Category</label>
+        <select id="productCategory" class="form-control">
+          <option value="hoodie">Hoodie</option>
+          <option value="t-shirts">T-Shirts</option>
+          <option value="jacket">Jacket</option>
+          <option value="sleepwear">Sleepwear</option>
+          <option value="shorts">Shorts</option>
+          <option value="pants">Pants</option>
+          <option value="joggers">Joggers</option>
+          <option value="dress">Dress</option>
+          <option value="skirts">Skirts</option>
+          <option value="underwear">Underwear</option>
+          <option value="socks">Socks</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Size</label>
+        <input type="text" id="productSize" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Quantity</label>
+        <input type="number" id="productQuantity" class="form-control">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Image URL</label>
+        <input type="text" id="productImage" class="form-control">
+        <img id="productImagePreview" src="#" alt="Product Image Preview">
+      </div>
+      <button type="submit" class="btn btn-success">Save Changes</button>
+    </form>
+
+    <!-- Delete Button -->
+    <button id="deleteProductBtn" class="btn btn-danger mt-3">Delete Product</button>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const urlParams = new URLSearchParams(window.location.search);
+  const productId = urlParams.get('id');
+
+  async function loadProduct() {
+    const { data: product, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .single();
+
+    if (error) {
+      console.error('Error loading product:', error);
+      return;
+    }
+
+    document.getElementById('productName').value = product.name;
+    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productDescription').value = product.description;
+    document.getElementById('productCategory').value = product.category;
+    document.getElementById('productSize').value = product.size;
+    document.getElementById('productQuantity').value = product.quantity;
+    document.getElementById('productImage').value = product.image_url;
+
+    // Update image preview
+    document.getElementById('productImagePreview').src = `https://dihzhshukgwduxatoyrj.supabase.co/storage/v1/object/public/${product.image_url}`;
+  }
+
+  document.getElementById('productImage').addEventListener('input', (e) => {
+    document.getElementById('productImagePreview').src = `https://dihzhshukgwduxatoyrj.supabase.co/storage/v1/object/public/${e.target.value}`;
+  });
+
+  document.getElementById('editProductForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const updatedProduct = {
+      name: document.getElementById('productName').value,
+      price: parseFloat(document.getElementById('productPrice').value),
+      description: document.getElementById('productDescription').value,
+      category: document.getElementById('productCategory').value,
+      size: document.getElementById('productSize').value,
+      quantity: parseInt(document.getElementById('productQuantity').value),
+      image_url: document.getElementById('productImage').value
+    };
+
+    const { error } = await supabase
+      .from('products')
+      .update(updatedProduct)
+      .eq('id', productId);
+
+    if (error) {
+      alert('Failed to update product.');
+      console.error(error);
+    } else {
+      alert('Product updated successfully!');
+      window.location.href = 'seller-dashboard.html'; // redirect if needed
+    }
+  });
+
+  document.getElementById('deleteProductBtn').addEventListener('click', async () => {
+    const { error } = await supabase
+      .from('products')
+      .delete()
+      .eq('id', productId);
+
+    if (error) {
+      alert('Failed to delete product.');
+      console.error(error);
+    } else {
+      alert('Product deleted successfully!');
+      window.location.href = 'seller-dashboard.html'; // redirect after deleting
+    }
+  });
+
+  loadProduct();
+</script>
+</body>
+</html>

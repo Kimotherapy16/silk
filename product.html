@@ -117,16 +117,58 @@
     </div>
 
     <div class="row g-4" id="product-list">
-      <!-- Example Product -->
-      <div class="col-md-4">
-        <div class="product-card" onclick="window.location.href='edit-product.html?id=1'">
-          <img src="https://via.placeholder.com/300x200" alt="Product Image" class="product-image mb-2">
-          <h5>Sample Hoodie</h5>
-          <p class="text-muted">₱499 - Hoodie</p>
-        </div>
-      </div>
-     
+      <!-- Dynamically populated products will appear here -->
     </div>
   </div>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const productList = document.getElementById('product-list');
+
+  async function loadProducts() {
+    const {
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.error('Not authenticated:', authError?.message);
+      productList.innerHTML = `<p class="text-warning">Please log in to view your products.</p>`;
+      window.location.href = 'index.html';
+      return;
+    }
+
+    const { data: products, error: fetchError } = await supabase
+      .from('products')
+      .select('*')
+      .eq('owner_id', user.id);
+
+    if (fetchError) {
+      console.error('Error fetching products:', fetchError.message);
+      productList.innerHTML = `<p class="text-danger">Failed to load products.</p>`;
+    } else if (!products.length) {
+      productList.innerHTML = `<p class="text-muted">You don't have any products yet.</p>`;
+    } else {
+      products.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.classList.add('col-md-4');
+        productCard.innerHTML = `
+          <div class="product-card" onclick="window.location.href='edit-product.html?id=${product.id}'">
+            <img src="${product.image_url}" alt="${product.name}" class="product-image mb-2">
+            <h5>${product.name}</h5>
+            <p class="text-muted">₱${product.price} - ${product.category}</p>
+          </div>
+        `;
+        productList.appendChild(productCard);
+      });
+    }
+  }
+
+  // Call the function
+  loadProducts();
+</script>
 </body>
 </html>

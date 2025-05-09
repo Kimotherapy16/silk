@@ -42,12 +42,18 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
     .btn-custom {
-      background-color: #00bcd4;
+      background-color: #00bcd4; /* Silk Blue */
       color: #121212;
       border: none;
     }
     .btn-custom:hover {
-      background-color: #00acc1;
+      background-color: #00acc1; /* Silk Blue lighter */
+    }
+    .btn-danger {
+      background-color: #f44336;
+    }
+    .btn-danger:hover {
+      background-color: #e53935;
     }
   </style>
 </head>
@@ -75,21 +81,12 @@
           <h5>Select Product</h5>
           <select class="form-select mb-2" id="product-select">
             <option value="">-- Choose a product --</option>
-            <option value="hoodie">Hoodie - ₱499</option>
-            <option value="tshirt">T-Shirt - ₱299</option>
-            <option value="jacket">Jacket - ₱699</option>
-            <option value="shorts">Shorts - ₱349</option>
           </select>
+         
           <div id="size-qty" style="display:none">
             <label>Quantity by Size:</label>
-            <div class="row g-2">
-              <div class="col"><input type="number" min="0" class="form-control" id="qty-xs" placeholder="XS"></div>
-              <div class="col"><input type="number" min="0" class="form-control" id="qty-s" placeholder="S"></div>
-              <div class="col"><input type="number" min="0" class="form-control" id="qty-m" placeholder="M"></div>
-              <div class="col"><input type="number" min="0" class="form-control" id="qty-l" placeholder="L"></div>
-              <div class="col"><input type="number" min="0" class="form-control" id="qty-xl" placeholder="XL"></div>
-            </div>
-            <button class="btn btn-custom mt-3" onclick="addToCart()">Add to Cart</button>
+            <div class="row g-2" id="size-options"></div>
+            <button class="btn btn-custom mt-3" onclick ="addToCart()">Add to Cart</button>
           </div>
         </div>
       </div>
@@ -105,52 +102,167 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
+
   <script>
-    const prices = { hoodie: 499, tshirt: 299, jacket: 699, shorts: 349 };
+    const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc"; 
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let products = [];
+    let ownerId = null;
     const cart = [];
 
-    document.getElementById('product-select').addEventListener('change', e => {
-      document.getElementById('size-qty').style.display = e.target.value ? 'block' : 'none';
+    async function getLoggedInUser() {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) return console.error("Error fetching user:", error);
+      if (user) {
+        ownerId = user.id;
+        fetchProducts();
+      } else {
+        console.log("User not logged in.");
+      }
+    }
+
+    async function fetchProducts() {
+      if (!ownerId) return console.error("Owner ID not found.");
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price, size')
+        .eq('owner_id', ownerId);
+
+      if (error) return console.error('Error fetching products:', error);
+      products = data;
+      updateProductSelect();
+    }
+
+    function updateProductSelect() {
+      const productSelect = document.getElementById('product-select');
+      productSelect.innerHTML = '<option value="">-- Choose a product --</option>';
+      products.forEach(product => {
+        const option = document.createElement('option');
+        option.value = product.id;
+        option.textContent = `${product.name} - ₱${product.price}`;
+        productSelect.appendChild(option);
+      });
+    }
+
+    document.getElementById('product-select').addEventListener('change', function () {
+      const selectedId = parseInt(this.value);
+      const product = products.find(p => p.id === selectedId);
+      const sizeContainer = document.getElementById('size-options');
+      sizeContainer.innerHTML = '';
+      document.getElementById('size-qty').style.display = 'none';
+
+      if (product && product.size) {
+        const sizes = product.size.split(',').map(s => s.trim());
+        sizes.forEach(size => {
+          const col = document.createElement('div');
+          col.className = 'col-md-4';
+          col.innerHTML = ` 
+            <label>${size}</label>
+            <input type="number" class="form-control" data-size="${size}" min="0" placeholder="Qty">
+          `;
+          sizeContainer.appendChild(col);
+        });
+        document.getElementById('size-qty').style.display = 'block';
+      }
     });
 
     function addToCart() {
-      const product = document.getElementById('product-select').value;
-      if (!product) return;
+      const selectedId = parseInt(document.getElementById('product-select').value);
+      const product = products.find(p => p.id === selectedId);
+      if (!product) return alert("Select a product first.");
 
-      const sizes = ['xs','s','m','l','xl'];
-      const sizeQuantities = sizes.map(size => parseInt(document.getElementById(`qty-${size}`).value) || 0);
-      const totalQty = sizeQuantities.reduce((a,b)=>a+b,0);
-      if (totalQty === 0) return alert("Please input quantity for at least one size.");
+      const inputs = document.querySelectorAll('#size-options input');
+      let somethingAdded = false;
 
-      cart.push({ product, sizes: sizeQuantities });
-      updateCart();
-    }
-
-    function updateCart() {
-      const list = document.getElementById('cart-list');
-      list.innerHTML = '';
-      let total = 0;
-      cart.forEach((item, i) => {
-        const name = item.product.charAt(0).toUpperCase() + item.product.slice(1);
-        const itemQty = item.sizes.reduce((a,b)=>a+b,0);
-        const itemTotal = itemQty * prices[item.product];
-        total += itemTotal;
-        list.innerHTML += `<li class="list-group-item bg-dark text-white d-flex justify-content-between">${name} x ${itemQty} <span>₱${itemTotal}</span> <button class="btn btn-sm btn-danger" onclick="removeItem(${i})">X</button></li>`;
+      inputs.forEach(input => {
+        const qty = parseInt(input.value);
+        const size = input.getAttribute('data-size');
+        if (qty && qty > 0) {
+          cart.push({ product, size, quantity: qty });
+          somethingAdded = true;
+        }
       });
-      document.getElementById('total-price').innerText = total;
+
+      if (!somethingAdded) return alert("Enter quantity for at least one size.");
+      updateCartDisplay();
     }
 
-    function removeItem(index) {
+    function updateCartDisplay() {
+      const cartList = document.getElementById('cart-list');
+      cartList.innerHTML = '';
+      let total = 0;
+
+      cart.forEach((item, index) => {
+        const price = item.quantity * item.product.price;
+        total += price;
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+          ${item.product.name} (${item.size}) x ${item.quantity}
+          <span>₱${price}</span>
+          <button class="btn btn-sm btn-danger" onclick="removeCartItem(${index})">×</button>
+        `;
+        cartList.appendChild(li);
+      });
+
+      document.getElementById('total-price').textContent = total.toFixed(2);
+    }
+
+    function removeCartItem(index) {
       cart.splice(index, 1);
-      updateCart();
+      updateCartDisplay();
     }
 
-    function checkout() {
-      if (!cart.length) return alert("Cart is empty.");
-      alert("Order placed successfully!");
-      cart.length = 0;
-      updateCart();
+    async function checkout() {
+  if (cart.length === 0) return alert("Cart is empty!");
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    alert("User not logged in. Cannot place order.");
+    return;
+  }
+
+  const buyerId = user.id;
+  const customerName = "Customer Name Here"; // Replace with actual customer name logic if needed
+  const timestamp = new Date().toISOString();
+
+  let totalOrderPrice = 0; // To calculate total price for the order
+
+  for (let item of cart) {
+    const { product, size, quantity } = item;
+    const totalPricePerProduct = quantity * product.price;
+    totalOrderPrice += totalPricePerProduct;
+
+    const { error } = await supabase.from('orders').insert({
+      product_id: product.id,
+      product_name: product.name,
+      price: product.price,
+      size: size,
+      quantity: quantity,
+      customer_name: customerName, // Assuming customer_name is the buyer's name
+      buyer_id: buyerId,
+      owner_id: ownerId,
+      total_price: totalOrderPrice, // Storing total price of the order
+      status: 'pending',
+      order_date: timestamp
+    });
+
+    if (error) {
+      console.error("Error inserting order:", error);
+      alert("Error placing order. Please try again.");
+      return;
     }
+  }
+
+  alert("Order placed successfully!");
+  cart.length = 0;
+  updateCartDisplay();
+}
+    // Initialize the user and products
+    getLoggedInUser();
   </script>
 </body>
 </html>
