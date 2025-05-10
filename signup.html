@@ -106,12 +106,6 @@
         <label for="confirm-password" class="form-label">Confirm Password</label>
         <input type="password" class="form-control" id="confirm-password" placeholder="Confirm your password" required />
       </div>
-      <div class="mb-3">
-        <label for="role" class="form-label">Are you a seller?</label>
-        <select class="form-control" id="role" required>
-          <option value="buyer">Buyer</option>
-        </select>
-      </div>
       <button type="submit" class="btn btn-primary w-100">Sign Up</button>
     </form>
     <p class="text-center text-muted mt-3">
@@ -137,7 +131,7 @@
       const lastName = document.getElementById('last-name').value
       const password = document.getElementById('password').value
       const confirmPassword = document.getElementById('confirm-password').value
-      const role = document.getElementById('role').value
+    
 
       if (password !== confirmPassword) {
         alert('Passwords do not match!')
@@ -171,7 +165,8 @@
               email: userEmail,
               first_name: firstName,
               last_name: lastName,
-              role: role
+              role: "buyer"
+
             }
           ])
 
