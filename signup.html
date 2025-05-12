@@ -106,6 +106,14 @@
         <label for="confirm-password" class="form-label">Confirm Password</label>
         <input type="password" class="form-control" id="confirm-password" placeholder="Confirm your password" required />
       </div>
+      <div class="mb-3">
+        <label for="role" class="form-label">I am a:</label>
+        <select id="role" class="form-control" required>
+          <option value="">Select Role</option>
+          <option value="buyer">Buyer</option>
+          <option value="seller">Seller</option>
+        </select>
+      </div>
       <button type="submit" class="btn btn-primary w-100">Sign Up</button>
     </form>
     <p class="text-center text-muted mt-3">
@@ -115,73 +123,77 @@
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
 
-    const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+  const form = document.getElementById('signup-form')
 
-    const form = document.getElementById('signup-form')
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault()
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault()
+    const email = document.getElementById('email').value
+    const firstName = document.getElementById('first-name').value
+    const lastName = document.getElementById('last-name').value
+    const password = document.getElementById('password').value
+    const confirmPassword = document.getElementById('confirm-password').value
+    const role = document.getElementById('role').value
 
-      const email = document.getElementById('email').value
-      const firstName = document.getElementById('first-name').value
-      const lastName = document.getElementById('last-name').value
-      const password = document.getElementById('password').value
-      const confirmPassword = document.getElementById('confirm-password').value
-    
+    if (!role) {
+      alert('Please select a role.');
+      return;
+    }
 
-      if (password !== confirmPassword) {
-        alert('Passwords do not match!')
-        return
+    if (password !== confirmPassword) {
+      alert('Passwords do not match!');
+      return;
+    }
+
+    try {
+      const { data: signupData, error: signupError } = await supabase.auth.signUp({
+        email,
+        password
+      })
+
+      if (signupError) {
+        alert('Sign Up failed: ' + signupError.message);
+        return;
       }
 
-      try {
-        const { data: signupData, error: signupError } = await supabase.auth.signUp({
-          email,
-          password
-        })
+      const userId = signupData.user?.id
+      const userEmail = signupData.user?.email
 
-        if (signupError) {
-          alert('Sign Up failed: ' + signupError.message);
-          return;
-        }
-
-        const userId = signupData.user?.id
-        const userEmail = signupData.user?.email
-
-        if (!userId || !userEmail) {
-          alert('Unexpected error. User ID is missing.')
-          return;
-        }
-
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: userId,
-              email: userEmail,
-              first_name: firstName,
-              last_name: lastName,
-              role: "buyer"
-
-            }
-          ])
-
-        if (insertError) {
-          alert('Failed to save user data: ' + insertError.message);
-          return;
-        }
-
-        window.location.href = 'index.html';
-
-      } catch (error) {
-        console.error('Error:', error);
-        alert('An unexpected error occurred: ' + error.message);
+      if (!userId || !userEmail) {
+        alert('Unexpected error. User ID is missing.');
+        return;
       }
-    })
-  </script>
+
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: userId,
+            email: userEmail,
+            first_name: firstName,
+            last_name: lastName,
+            role: role
+          }
+        ])
+
+      if (insertError) {
+        alert('Failed to save user data: ' + insertError.message);
+        return;
+      }
+
+      alert('Sign up successful! Please check your email to verify your account.');
+
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An unexpected error occurred: ' + error.message);
+    }
+  });
+</script>
+
 </body>
 </html>

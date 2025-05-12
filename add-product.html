@@ -61,6 +61,31 @@
     .btn-submit:hover {
       background-color: #0097a7;
     }
+
+    .image-upload-box {
+      width: 100px;
+      height: 100px;
+      border: 2px dashed #00bcd4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #2b2b2b;
+      position: relative;
+    }
+
+    .image-upload-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-upload-box span {
+      font-size: 2rem;
+      color: #00bcd4;
+    }
   </style>
 </head>
 <body>
@@ -138,8 +163,24 @@
         </div>
 
         <div class="mb-3">
-          <label for="product-image" class="form-label">Upload Product Image</label>
-          <input type="file" class="form-control" id="product-image" required>
+          <label class="form-label">Color</label>
+          <select id="product-color" class="form-control" required>
+            <option value="">Select Color</option>
+            <option value="red">Red</option>
+            <option value="blue">Blue</option>
+            <option value="green">Green</option>
+            <option value="black">Black</option>
+            <option value="white">White</option>
+            <option value="yellow">Yellow</option>
+            <option value="purple">Purple</option>
+            <option value="pink">Pink</option>
+            <option value="grey">Grey</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Upload Product Images (Max 2)</label>
+          <div id="image-upload-container" class="d-flex gap-3 flex-wrap"></div>
         </div>
 
         <div class="text-end mt-4">
@@ -148,67 +189,126 @@
       </form>
     </div>
   </div>
+
 <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
+  const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-    // Add product form submission
-    document.getElementById("add-product-form").addEventListener("submit", async (event) => {
-      event.preventDefault();
+  const imageUploadContainer = document.getElementById("image-upload-container");
+  let imageFiles = [];
 
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        alert("You must be logged in to add products.");
+  function createImageBox() {
+    if (imageFiles.length >= 2) return;
+
+    const box = document.createElement("div");
+    box.className = "image-upload-box";
+    const plus = document.createElement("span");
+    plus.textContent = "+";
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.style.display = "none";
+
+    input.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      imageFiles.push(file);
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        box.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = reader.result;
+        box.appendChild(img);
+
+        if (imageFiles.length < 2) createImageBox();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    box.addEventListener("click", () => input.click());
+    box.appendChild(plus);
+    box.appendChild(input);
+    imageUploadContainer.appendChild(box);
+  }
+
+  createImageBox();
+
+  document.getElementById("add-product-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      alert("You must be logged in to add products.");
+      return;
+    }
+
+    if (imageFiles.length === 0) {
+      alert("Please upload at least one image.");
+      return;
+    }
+
+    if (imageFiles.length > 2) {
+      alert("You can only upload up to 2 images.");
+      return;
+    }
+
+    let imageUrls = [];
+    for (const file of imageFiles) {
+      const { data, error } = await supabase.storage
+        .from("product-images")
+        .upload(`${Date.now()}_${file.name}`, file);
+
+      if (error) {
+        alert("Error uploading image: " + error.message);
         return;
       }
 
-      const productName = document.getElementById("product-name").value;
-      const productDescription = document.getElementById("product-description").value;
-      const productPrice = document.getElementById("product-price").value;
-      const selectedSize = document.getElementById("size-dropdown").value;
-      const productQuantity = document.getElementById("quantity").value;
-      const productCategory = document.getElementById("product-category").value;
+      const publicUrl = supabase
+        .storage
+        .from("product-images")
+        .getPublicUrl(data.path).data.publicUrl;
 
-      // Upload product image
-      const imageFile = document.getElementById("product-image").files[0];
-      let imageUrl = '';
-      if (imageFile) {
-        const { data, error: uploadError } = await supabase.storage
-          .from('product-images')
-          .upload(`${Date.now()}_${imageFile.name}`, imageFile);
-        
-        if (uploadError) {
-          alert("Error uploading image: " + uploadError.message);
-          return;
-        }
+      imageUrls.push(publicUrl);
+    }
 
-        imageUrl = data?.path;
-      }
+    const productName = document.getElementById("product-name").value;
+    const productDescription = document.getElementById("product-description").value;
+    const productPrice = document.getElementById("product-price").value;
+    const selectedSize = document.getElementById("size-dropdown").value;
+    const productQuantity = document.getElementById("quantity").value;
+    const productCategory = document.getElementById("product-category").value;
+    const selectedColor = document.getElementById("product-color").value;
 
-      // Insert product data into Supabase
-      const { data, error } = await supabase.from("products").insert([
-        {
-          name: productName,
-          description: productDescription,
-          price: productPrice,
-          size: selectedSize,
-          quantity: productQuantity,
-          category: productCategory,
-          image_url: imageUrl,
-          owner_id: user.id,
-        },
-      ]);
+    const { error } = await supabase.from("products").insert([{
+      name: productName,
+      description: productDescription,
+      price: productPrice,
+      size: selectedSize,
+      quantity: productQuantity,
+      category: productCategory,
+      color: selectedColor,  
+      image_url_1: imageUrls[0] || null,
+      image_url_2: imageUrls[1] || null,
+      owner_id: user.id
+    }]);
 
-      if (error) {
-        alert("Error adding product: " + error.message);
-      } else {
-        alert("Product successfully added!");
-      }
-    });
+    if (error) {
+      alert("Error adding product: " + error.message);
+    } else {
+      alert("Product successfully added!");
+      document.getElementById("add-product-form").reset();
+      imageUploadContainer.innerHTML = "";
+      imageFiles = [];
+      createImageBox();
+    }
+  });
 </script>
 </body>
 </html>
