@@ -65,26 +65,18 @@
       box-shadow: 0 0 0 0.2rem rgba(0,188,212,0.25);
     }
 
-    .order-details {
-      background-color: #2b2b2b;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    }
-
-    .order-items {
-      margin-bottom: 1rem;
-    }
-
-    .order-item {
-      margin-bottom: 0.5rem;
-    }
-
     .order-status {
       background-color: #00bcd4;
-      padding: 0.5rem;
+      padding: 0.25rem 0.5rem;
       border-radius: 0.25rem;
       color: white;
+      font-size: 0.85rem;
+    }
+
+    .status-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
     }
   </style>
 </head>
@@ -105,7 +97,6 @@
   </nav>
 
   <div class="container mt-4">
-    <!-- Search and Filter Section -->
     <div class="search-bar d-flex gap-3 flex-wrap">
       <input type="text" id="search-input" class="form-control w-100 w-md-50" placeholder="Search by customer or order ID...">
       <select id="sort-select" class="form-select w-100 w-md-25">
@@ -114,22 +105,21 @@
         <option value="date-desc">Date: Newest First</option>
         <option value="status-pending">Status: Pending</option>
         <option value="status-shipped">Status: Shipped</option>
-        <option value="status-delivered">Status: Delivered</option>
+        <option value="status-cancelled">Status: Cancelled</option>
       </select>
       <select id="status-filter" class="form-select w-100 w-md-25">
         <option value="">Filter by Status</option>
         <option value="pending">Pending</option>
         <option value="shipped">Shipped</option>
-        <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
       </select>
     </div>
 
-    <div class="row g-4" id="order-list">
-   
-    </div>
+    <div class="row g-4" id="order-list"></div>
   </div>
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc"; 
@@ -140,60 +130,133 @@
     const statusFilter = document.getElementById("status-filter");
     const orderList = document.getElementById("order-list");
 
-    // Fetch orders from Supabase
     async function fetchOrders() {
       try {
-        let query = supabase
-          .from("orders")
-          .select("*")
-          .order("order_date", { ascending: false });
-
-        // Handle filters
-        if (statusFilter.value) {
-          query = query.eq("status", statusFilter.value);
-        }
-
-        if (searchInput.value) {
-          query = query.ilike("customer_name", `%${searchInput.value}%`);
-        }
-
-        const { data, error } = await query;
+        let { data, error } = await supabase.from("orders").select("*");
 
         if (error) throw error;
 
-        displayOrders(data); // Pass data to display in HTML
-      } catch (error) {
-        console.error("Error fetching orders:", error);
+        let filtered = [...data];
+
+        // Filter by status
+        const status = statusFilter.value;
+        if (status) {
+          filtered = filtered.filter(order => order.status === status);
+        }
+
+        // Search
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        if (searchTerm) {
+          filtered = filtered.filter(order =>
+            (!isNaN(searchTerm) && order.order_id.toString().includes(searchTerm)) ||
+            (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm))
+          );
+        }
+
+        // Sort
+        const sort = sortSelect.value;
+        if (sort === "date-asc") {
+          filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        } else if (sort === "date-desc") {
+          filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        } else if (sort === "status-pending") {
+          filtered = filtered.filter(o => o.status === "pending");
+        } else if (sort === "status-shipped") {
+          filtered = filtered.filter(o => o.status === "shipped");
+        } else if (sort === "status-cancelled") {
+          filtered = filtered.filter(o => o.status === "cancelled");
+        }
+
+        updateDashboardStats(filtered);
+        displayOrders(filtered);
+      } catch (err) {
+        console.error("Fetch error:", err.message);
+        orderList.innerHTML = `<div class="col-12 text-danger text-center">Error loading orders.</div>`;
       }
     }
 
-    // Display orders on the page
     function displayOrders(orders) {
-      orderList.innerHTML = ""; // Clear current order list
-
+      orderList.innerHTML = "";
       orders.forEach(order => {
         const orderCard = document.createElement("div");
-        orderCard.classList.add("col-md-4");
-        orderCard.innerHTML = `
-          <div class="order-card" onclick="window.location.href='order-details.html?id=${order.order_id}'">
+        orderCard.className = "col-12 col-md-6 col-lg-4";
+        orderCard.innerHTML = ` 
+          <div class="order-card">
             <h5>Order #${order.order_id}</h5>
-            <p class="text-muted">Customer: ${order.customer_name}</p>
-            <p class="text-muted">Status: <span class="order-status">${order.status}</span></p>
-            <p class="text-muted">Date: ${new Date(order.order_date).toLocaleDateString()}</p>
+            <p>Customer: ${order.customer_name}</p>
+            <p>Status: <span class="order-status">${order.status}</span></p>
+            <p>Created: ${new Date(order.created_at).toLocaleString()}</p>
+            ${order.status === 'pending' ? `
+            <div class="status-buttons">
+              <button class="btn btn-success" onclick="updateOrderStatus(${order.order_id}, 'shipped')">Mark as Shipped</button>
+              <button class="btn btn-danger" onclick="updateOrderStatus(${order.order_id}, 'cancelled')">Mark as Cancelled</button>
+            </div>` : ''}
           </div>
         `;
         orderList.appendChild(orderCard);
       });
     }
 
-    // Event Listeners
-    searchInput.addEventListener("input", fetchOrders);
-    sortSelect.addEventListener("change", fetchOrders);
-    statusFilter.addEventListener("change", fetchOrders);
+    function updateDashboardStats(orders) {
+      // Add logic to update total sales, etc.
+    }
 
-    // Initial fetch
+   async function updateOrderStatus(orderId, status) {
+      try {
+        // Get the order first
+        const { data: orderData, error: fetchError } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("order_id", orderId)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        // Update the order status
+        const { error: updateError } = await supabase
+          .from("orders")
+          .update({ status })
+          .eq("order_id", orderId);
+
+        if (updateError) throw updateError;
+
+        // If marked as shipped, update total_sales in seller_dashboard
+        if (status === "shipped") {
+          const totalAmount = orderData.total_amount || 0;
+
+          // Fetch current dashboard record (assuming only one row)
+          const { data: dashboardData, error: dashboardError } = await supabase
+            .from("seller_dashboard")
+            .select("id, total_sales")
+            .single(); // assumes only one dashboard row exists
+
+          if (dashboardError) throw dashboardError;
+
+          const currentSales = dashboardData.total_sales || 0;
+          const newTotalSales = currentSales + totalAmount;
+
+          // Update total_sales
+          const { error: salesUpdateError } = await supabase
+            .from("seller_dashboard")
+            .update({ total_sales: newTotalSales })
+            .eq("id", dashboardData.id);
+
+          if (salesUpdateError) throw salesUpdateError;
+        }
+
+        // Refresh order list
+        await fetchOrders();
+      } catch (err) {
+        console.error("Update error:", err.message);
+        alert("Failed to update order status.");
+      }
+    }
+    searchInput.addEventListener("input", fetchOrders);
+sortSelect.addEventListener("change", fetchOrders);
+statusFilter.addEventListener("change", fetchOrders);
+
+    // Fetch orders on page load
     fetchOrders();
   </script>
-
 </body>
 </html>

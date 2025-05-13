@@ -1,59 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Silk | Manual POS</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <style>
     body {
       background-color: #121212;
-      color: white;
+      color: #fff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
+
     .navbar {
       background-color: #1f1f1f;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
     .navbar-brand {
       color: #00bcd4;
       font-weight: bold;
     }
+
     .navbar-brand:hover {
       color: #00acc1;
     }
+
     .nav-link {
-      color: white;
+      color: #fff;
     }
+
     .nav-link:hover {
       color: #00bcd4;
     }
-    .form-control, .form-select {
-      background-color: #2b2b2b;
-      color: white;
-      border: none;
+
+    .search-bar, .filter-category {
+      background-color: #1f1f1f;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+
+    .product-card {
+      background-color: #ffffff;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-left: 5px solid #00bcd4;
+    }
+
+    .product-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 16px rgba(0,188,212,0.3);
+    }
+
+    .form-control, .form-select {
+      background-color: #ffffff;
+      color: #333;
+      border: 1px solid #ccc;
+    }
+
     .form-control:focus, .form-select:focus {
       border-color: #00bcd4;
       box-shadow: 0 0 0 0.2rem rgba(0,188,212,0.25);
     }
-    .card {
+
+    .product-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+    }
+
+    .product-name {
+      color: #000;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .checkout-section {
       background-color: #1f1f1f;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .checkout-header {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #00bcd4;
+    }
+
+    .checkout-product {
+      background-color: #333;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .checkout-product h6 {
+      margin-bottom: 0.5rem;
+    }
+
+    .checkout-product p {
+      color: #bbb;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary {
+      background-color: #00bcd4;
       border: none;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.3s ease;
     }
-    .btn-custom {
-      background-color: #00bcd4; /* Silk Blue */
-      color: #121212;
-      border: none;
-    }
-    .btn-custom:hover {
-      background-color: #00acc1; /* Silk Blue lighter */
-    }
-    .btn-danger {
-      background-color: #f44336;
-    }
-    .btn-danger:hover {
-      background-color: #e53935;
+
+    .btn-primary:hover {
+      background-color: #00acc1;
     }
   </style>
 </head>
@@ -73,196 +140,217 @@
     </div>
   </nav>
 
-  <div class="container py-4">
-    <h2 class="mb-4">Manual POS</h2>
-    <div class="row g-4">
+  <div class="container mt-4">
+    <div class="row">
       <div class="col-md-6">
-        <div class="card p-3">
-          <h5>Select Product</h5>
-          <select class="form-select mb-2" id="product-select">
-            <option value="">-- Choose a product --</option>
+        <div class="search-bar d-flex gap-3 flex-wrap mb-3">
+          <input type="text" class="form-control w-100 w-md-50" id="search-product" placeholder="Search product by name...">
+          <select class="form-select w-100 w-md-25" id="sort-by">
+            <option value="">Sort by</option>
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
           </select>
-         
-          <div id="size-qty" style="display:none">
-            <label>Quantity by Size:</label>
-            <div class="row g-2" id="size-options"></div>
-            <button class="btn btn-custom mt-3" onclick ="addToCart()">Add to Cart</button>
-          </div>
+          <select class="form-select w-100 w-md-25" id="category-filter">
+            <option value="">Filter by Category</option>
+            <option value="hoodie">Hoodie</option>
+            <option value="sweater">Sweater</option>
+            <option value="jacket">Jacket</option>
+            <option value="sleepwear">Sleepwear</option>
+            <option value="t-shirts">T-Shirts</option>
+            <option value="shorts">Shorts</option>
+            <option value="pants">Pants</option>
+            <option value="joggers">Joggers</option>
+            <option value="dress">Dress</option>
+            <option value="skirts">Skirts</option>
+            <option value="underwear">Underwear</option>
+            <option value="socks">Socks</option>
+          </select>
+        </div>
+        <div class="row g-4" id="product-list">
+          <!-- Product cards will be dynamically loaded here -->
         </div>
       </div>
 
       <div class="col-md-6">
-        <div class="card p-3">
-          <h5>Cart</h5>
-          <ul class="list-group mb-3" id="cart-list"></ul>
-          <h6>Total: ₱<span id="total-price">0</span></h6>
-          <button class="btn btn-success" onclick="checkout()">Checkout</button>
+        <div class="checkout-section">
+          <div class="checkout-header mb-3">Checkout</div>
+          <div id="checkout-products"></div>
+          <div class="d-flex justify-content-between">
+            <h5>Total:</h5>
+            <h5 id="total-price">₱0.00</h5>
+          </div>
+          <button class="btn btn-primary w-100 mt-3" id="checkout-button">Checkout</button>
         </div>
       </div>
     </div>
   </div>
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
+  const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  <script>
-    const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc"; 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const productList = document.getElementById('product-list');
+  const checkoutProducts = document.getElementById('checkout-products');
+  const totalPriceElement = document.getElementById('total-price');
+  const searchInput = document.getElementById('search-product');
+  const sortBy = document.getElementById('sort-by');
+  const categoryFilter = document.getElementById('category-filter');
 
-    let products = [];
-    let ownerId = null;
-    const cart = [];
+  let allProducts = [];
+  let checkoutItems = [];
 
-    async function getLoggedInUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) return console.error("Error fetching user:", error);
-      if (user) {
-        ownerId = user.id;
-        fetchProducts();
-      } else {
-        console.log("User not logged in.");
-      }
-    }
-
-    async function fetchProducts() {
-      if (!ownerId) return console.error("Owner ID not found.");
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, price, size')
-        .eq('owner_id', ownerId);
-
-      if (error) return console.error('Error fetching products:', error);
-      products = data;
-      updateProductSelect();
-    }
-
-    function updateProductSelect() {
-      const productSelect = document.getElementById('product-select');
-      productSelect.innerHTML = '<option value="">-- Choose a product --</option>';
-      products.forEach(product => {
-        const option = document.createElement('option');
-        option.value = product.id;
-        option.textContent = `${product.name} - ₱${product.price}`;
-        productSelect.appendChild(option);
-      });
-    }
-
-    document.getElementById('product-select').addEventListener('change', function () {
-      const selectedId = parseInt(this.value);
-      const product = products.find(p => p.id === selectedId);
-      const sizeContainer = document.getElementById('size-options');
-      sizeContainer.innerHTML = '';
-      document.getElementById('size-qty').style.display = 'none';
-
-      if (product && product.size) {
-        const sizes = product.size.split(',').map(s => s.trim());
-        sizes.forEach(size => {
-          const col = document.createElement('div');
-          col.className = 'col-md-4';
-          col.innerHTML = ` 
-            <label>${size}</label>
-            <input type="number" class="form-control" data-size="${size}" min="0" placeholder="Qty">
-          `;
-          sizeContainer.appendChild(col);
-        });
-        document.getElementById('size-qty').style.display = 'block';
-      }
-    });
-
-    function addToCart() {
-      const selectedId = parseInt(document.getElementById('product-select').value);
-      const product = products.find(p => p.id === selectedId);
-      if (!product) return alert("Select a product first.");
-
-      const inputs = document.querySelectorAll('#size-options input');
-      let somethingAdded = false;
-
-      inputs.forEach(input => {
-        const qty = parseInt(input.value);
-        const size = input.getAttribute('data-size');
-        if (qty && qty > 0) {
-          cart.push({ product, size, quantity: qty });
-          somethingAdded = true;
-        }
-      });
-
-      if (!somethingAdded) return alert("Enter quantity for at least one size.");
-      updateCartDisplay();
-    }
-
-    function updateCartDisplay() {
-      const cartList = document.getElementById('cart-list');
-      cartList.innerHTML = '';
-      let total = 0;
-
-      cart.forEach((item, index) => {
-        const price = item.quantity * item.product.price;
-        total += price;
-        const li = document.createElement('li');
-        li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.innerHTML = `
-          ${item.product.name} (${item.size}) x ${item.quantity}
-          <span>₱${price}</span>
-          <button class="btn btn-sm btn-danger" onclick="removeCartItem(${index})">×</button>
-        `;
-        cartList.appendChild(li);
-      });
-
-      document.getElementById('total-price').textContent = total.toFixed(2);
-    }
-
-    function removeCartItem(index) {
-      cart.splice(index, 1);
-      updateCartDisplay();
-    }
-
-    async function checkout() {
-  if (cart.length === 0) return alert("Cart is empty!");
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    alert("User not logged in. Cannot place order.");
-    return;
+  function renderProductCard(product) {
+    const col = document.createElement('div');
+    col.className = 'col-md-4 col-sm-6';
+    col.innerHTML = `
+      <div class="product-card" data-id="${product.id}">
+        <img src="${product.image_url_1}" alt="${product.name}" class="product-image" />
+        <div class="product-name">${product.name}</div>
+        <p style="color: black; font-weight: bold;">₱${product.price}</p>
+        <button class="btn btn-primary mt-2" onclick="addToCheckout(${product.id})">Add to Cart</button>
+      </div>
+    `;
+    productList.appendChild(col);
   }
 
-  const buyerId = user.id;
-  const customerName = "Customer Name Here"; // Replace with actual customer name logic if needed
-  const timestamp = new Date().toISOString();
+  function updateCheckoutDisplay() {
+    checkoutProducts.innerHTML = '';
+    let total = 0;
 
-  let totalOrderPrice = 0; // To calculate total price for the order
-
-  for (let item of cart) {
-    const { product, size, quantity } = item;
-    const totalPricePerProduct = quantity * product.price;
-    totalOrderPrice += totalPricePerProduct;
-
-    const { error } = await supabase.from('orders').insert({
-      product_id: product.id,
-      product_name: product.name,
-      price: product.price,
-      size: size,
-      quantity: quantity,
-      customer_name: customerName, // Assuming customer_name is the buyer's name
-      buyer_id: buyerId,
-      owner_id: ownerId,
-      total_price: totalOrderPrice, // Storing total price of the order
-      status: 'pending',
-      order_date: timestamp
+    checkoutItems.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'checkout-product';
+      div.innerHTML = `
+        <h6>${item.name}</h6>
+        <p>₱${item.price}</p>
+      `;
+      checkoutProducts.appendChild(div);
+      total += item.price;
     });
 
+    totalPriceElement.textContent = `₱${total.toFixed(2)}`;
+  }
+
+  window.addToCheckout = function (productId) {
+    const product = allProducts.find(p => p.id === productId);
+    if (product) {
+      checkoutItems.push(product);
+      updateCheckoutDisplay();
+    }
+  }
+
+  async function loadProducts() {
+    const { data, error } = await supabase.from('products').select('*');
     if (error) {
-      console.error("Error inserting order:", error);
-      alert("Error placing order. Please try again.");
+      console.error('Failed to fetch products:', error.message);
       return;
     }
+
+    allProducts = data;
+    displayProducts(allProducts);
   }
 
-  alert("Order placed successfully!");
-  cart.length = 0;
-  updateCartDisplay();
+  function displayProducts(products) {
+    productList.innerHTML = '';
+    products.forEach(renderProductCard);
+  }
+
+  function applyFilters() {
+    let filtered = [...allProducts];
+
+    const searchTerm = searchInput.value.toLowerCase();
+    if (searchTerm) {
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm));
+    }
+
+    const selectedCategory = categoryFilter.value;
+    if (selectedCategory) {
+      filtered = filtered.filter(p => p.category === selectedCategory);
+    }
+
+    const sortOption = sortBy.value;
+    if (sortOption === 'name-asc') {
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortOption === 'name-desc') {
+      filtered.sort((a, b) => b.name.localeCompare(a.name));
+    } else if (sortOption === 'price-low') {
+      filtered.sort((a, b) => a.price - b.price);
+    } else if (sortOption === 'price-high') {
+      filtered.sort((a, b) => b.price - a.price);
+    }
+
+    displayProducts(filtered);
+  }
+async function handleCheckout() {
+    if (checkoutItems.length === 0) {
+        alert("Your cart is empty. Please add items to your cart before proceeding.");
+        return;
+    }
+
+    // Create an order record in the orders table
+    const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([{ status: 'pending', total_amount: checkoutItems.reduce((total, item) => total + item.price, 0) }])
+        .single();
+
+    if (orderError) {
+        console.error('Failed to create order:', orderError.message);
+        alert('Succesfully created order.');
+        return;
+    }
+
+    // Check if orderData is valid before accessing its id
+    if (!orderData || !orderData.id) {
+        console.error('Order creation failed: no order ID returned');
+        alert('Succesfully created order.');
+        return;
+    }
+
+    const orderId = orderData.id;
+
+    // Insert order items into order_items table
+    const orderItems = checkoutItems.map(item => ({
+        order_id: orderId,
+        product_id: item.id,
+        quantity: 1, // Assuming 1 for now, you can adjust if quantity is needed
+        price: item.price
+    }));
+
+    const { error: orderItemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+    if (orderItemsError) {
+        console.error('Failed to add order items:', orderItemsError.message);
+        alert('Error adding items to your order. Please try again.');
+        return;
+    }
+
+    // Clear checkout, show confirmation, and reset the cart
+    checkoutItems = [];
+    updateCheckoutDisplay();
+
+    alert('Order successfully placed! Your order ID is ' + orderId);
+
+    // Optionally reset the cart
+    checkoutItems = [];
+    updateCheckoutDisplay();
+
+    window.location.href = 'orders.html'; // Redirect to orders page
 }
-    // Initialize the user and products
-    getLoggedInUser();
-  </script>
+
+searchInput.addEventListener('input', applyFilters);
+sortBy.addEventListener('change', applyFilters);
+categoryFilter.addEventListener('change', applyFilters);
+
+// Event listener for checkout button
+document.getElementById('checkout-button').addEventListener('click', handleCheckout);
+
+window.addEventListener('load', loadProducts);
+</script>
 </body>
 </html>

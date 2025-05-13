@@ -99,6 +99,9 @@
     <p class="text-center text-muted mt-3">
       <span class="text-white">Don't have an account? <a href="signup.html">Sign up here</a></span>
     </p>
+    <p class="text-center text-muted mt-2">
+      <a href="forgot-password.html">Forgot your password?</a>
+    </p>
     <!-- Skip Login Button -->
     <button class="skip-button" id="skip-login-btn">Skip Login & Go to Buyer Dashboard</button>
   </div>
@@ -146,6 +149,8 @@
           window.location.href = "seller-dashboard.html";
         } else if (userData.role === 'buyer') {
           window.location.href = "buyer-dashboard.html";
+        } else if (userData.role === 'limited_seller') {
+          window.location.href = "seller-dashboard.html";
         } else {
           alert('No role found for this user!');
         }

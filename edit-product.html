@@ -8,21 +8,100 @@
     body {
       background-color: #121212;
       color: white;
-      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    input, textarea, select {
-      background-color: #1e1e1e;
+
+    .navbar {
+      background-color: #1f1f1f;
+    }
+
+    .navbar-brand {
+      color: #00bcd4;
+      font-weight: bold;
+    }
+
+    .navbar-brand:hover {
+      color: #00acc1;
+    }
+
+    .nav-link {
       color: white;
-      border: 1px solid #444;
     }
-    img {
-      max-width: 300px;
-      margin-top: 10px;
+
+    .nav-link:hover {
+      color: #00bcd4;
+    }
+
+    .form-container {
+      background-color: #1f1f1f;
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    }
+
+    .form-control {
+      background-color: #2b2b2b;
+      color: white;
+      border: none;
+    }
+
+    .form-control:focus {
+      background-color: #2b2b2b;
+      color: white;
+      border-color: #00bcd4;
+      box-shadow: 0 0 0 0.2rem rgba(0, 188, 212, 0.25);
+    }
+
+    .btn-submit {
+      background-color: #00bcd4;
+      border: none;
+    }
+
+    .btn-submit:hover {
+      background-color: #0097a7;
+    }
+
+    .image-upload-box {
+      width: 100px;
+      height: 100px;
+      border: 2px dashed #00bcd4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #2b2b2b;
+      position: relative;
+    }
+
+    .image-upload-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .image-upload-box span {
+      font-size: 2rem;
+      color: #00bcd4;
     }
   </style>
 </head>
 <body>
-
+  <nav class="navbar navbar-expand-lg navbar-dark px-3">
+    <a class="navbar-brand" href="seller-dashboard.html">Silk</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="seller-dashboard.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="add-product.html">Add Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="product.html">My Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="orders.html">Orders</a></li>
+        <li class="nav-item"><a class="nav-link" href="pos.html">Manual POS</a></li>
+        <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+        <li class="nav-item"><a class="nav-link" href="index.html">Logout</a></li>
+      </ul>
+    </div>
+  </nav>
   <div class="container">
     <h2>Edit Product</h2>
     <form id="editProductForm">
@@ -62,10 +141,14 @@
         <label class="form-label">Quantity</label>
         <input type="number" id="productQuantity" class="form-control">
       </div>
+
       <div class="mb-3">
-        <label class="form-label">Image URL</label>
-        <input type="text" id="productImage" class="form-control">
-        <img id="productImagePreview" src="#" alt="Product Image Preview">
+        <label class="form-label">Product Image</label>
+        <div class="image-upload-box" onclick="document.getElementById('productImage').click();">
+          <input type="file" id="productImage" class="d-none" accept="image/*">
+          <img id="productImagePreview" src="" alt="Product Image Preview" style="display:none">
+          <span>+</span>
+        </div>
       </div>
       <button type="submit" class="btn btn-success">Save Changes</button>
     </form>
@@ -74,12 +157,13 @@
     <button id="deleteProductBtn" class="btn btn-danger mt-3">Delete Product</button>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const urlParams = new URLSearchParams(window.location.search);
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  
+  const urlParams = new URLSearchParams(window.location.search);
   const productId = urlParams.get('id');
 
   async function loadProduct() {
@@ -88,12 +172,12 @@ const urlParams = new URLSearchParams(window.location.search);
       .select('*')
       .eq('id', productId)
       .single();
-
+  
     if (error) {
       console.error('Error loading product:', error);
       return;
     }
-
+  
     document.getElementById('productName').value = product.name;
     document.getElementById('productPrice').value = product.price;
     document.getElementById('productDescription').value = product.description;
@@ -103,16 +187,20 @@ const urlParams = new URLSearchParams(window.location.search);
     document.getElementById('productImage').value = product.image_url;
 
     // Update image preview
-    document.getElementById('productImagePreview').src = `https://dihzhshukgwduxatoyrj.supabase.co/storage/v1/object/public/${product.image_url}`;
+    const imageUrl = product.image_url;
+    document.getElementById('productImagePreview').src = `https://dihzhshukgwduxatoyrj.supabase.co/storage/v1/object/public/${imageUrl}`;
   }
 
+  // Image file input handler
   document.getElementById('productImage').addEventListener('input', (e) => {
-    document.getElementById('productImagePreview').src = `https://dihzhshukgwduxatoyrj.supabase.co/storage/v1/object/public/${e.target.value}`;
+    const newImageUrl = e.target.value;
+    document.getElementById('productImagePreview').src = `https://dihzhshukgwduxatoyrj.supabase.co/storage/v1/object/public/${newImageUrl}`;
   });
 
+  // Form submission to update the product
   document.getElementById('editProductForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-
+  
     const updatedProduct = {
       name: document.getElementById('productName').value,
       price: parseFloat(document.getElementById('productPrice').value),
@@ -120,39 +208,94 @@ const urlParams = new URLSearchParams(window.location.search);
       category: document.getElementById('productCategory').value,
       size: document.getElementById('productSize').value,
       quantity: parseInt(document.getElementById('productQuantity').value),
-      image_url: document.getElementById('productImage').value
     };
+
+    // If a new image is uploaded, upload it to Supabase storage
+    const file = document.getElementById('productImage').files[0];
+    if (file) {
+      const { data, error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(file.name, file);
+
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        alert('Failed to upload image.');
+        return;
+      }
+
+      updatedProduct.image_url = `product-images/${file.name}`;
+    }
 
     const { error } = await supabase
       .from('products')
       .update(updatedProduct)
       .eq('id', productId);
-
+  
     if (error) {
       alert('Failed to update product.');
       console.error(error);
     } else {
       alert('Product updated successfully!');
-      window.location.href = 'seller-dashboard.html'; // redirect if needed
+      window.location.href = 'seller-dashboard.html'; 
     }
   });
 
-  document.getElementById('deleteProductBtn').addEventListener('click', async () => {
-    const { error } = await supabase
-      .from('products')
-      .delete()
-      .eq('id', productId);
+  // Fetch the current user role and control delete button visibility
+  async function checkUserRole() {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (error) {
-      alert('Failed to delete product.');
-      console.error(error);
-    } else {
-      alert('Product deleted successfully!');
-      window.location.href = 'seller-dashboard.html'; // redirect after deleting
+    if (authError || !user) {
+      console.error("Auth error or user not found:", authError?.message);
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData) {
+      console.error("Error fetching user role:", userError?.message);
+      return;
+    }
+
+    if (userData.role === "limited_seller") {
+      const deleteBtn = document.getElementById("deleteProductBtn");
+      if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = "You don't have permission to delete";
+        deleteBtn.classList.add("btn-secondary");
+        deleteBtn.classList.remove("btn-danger");
+      }
+    }
+  }
+
+  checkUserRole();
+
+  // Optional: Functionality to delete product (if allowed)
+  document.getElementById('deleteProductBtn').addEventListener('click', async () => {
+    const confirmDelete = confirm('Are you sure you want to delete this product?');
+    if (confirmDelete) {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+  
+      if (error) {
+        alert('Failed to delete product.');
+        console.error(error);
+      } else {
+        alert('Product deleted successfully!');
+        window.location.href = 'seller-dashboard.html'; 
+      }
     }
   });
 
   loadProduct();
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.21.0/dist/supabase.min.js"></script>
+
 </body>
 </html>

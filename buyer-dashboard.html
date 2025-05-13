@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Silk | Buyer Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+
   <style>
     body {
       background-color: #121212;
@@ -98,13 +100,13 @@
 <body>
   <!-- Navbar -->
   <nav class="navbar d-flex justify-content-between align-items-center">
-    <div class="navbar-brand">Silk</div>
+     <a class="navbar-brand" href="buyer-dashboard.html">Silk</a>
     <div>
       <a href="buyer-dashboard.html" class="nav-link d-inline">Home</a>
       <a href="buyer-profile.html" class="nav-link d-inline">Profile</a>
       <a href="buyer-orders.html" class="nav-link d-inline">Orders</a>
       <a href="buyer-cart.html" class="nav-link d-inline">Cart</a>
-      <a href="#" id="logoutBtn" class="nav-link d-inline">Logout</a>
+  
     </div>
   </nav>
 
@@ -200,6 +202,9 @@
     if (data.user) {
       currentUserId = data.user.id;
       updateCartCount();
+    } else {
+      currentUserId = null;
+      cartCount.textContent = '0'; // Reset cart count if not authenticated
     }
   }
 
@@ -245,20 +250,25 @@
     }
 
     products.forEach(product => {
-  const col = document.createElement('div');
-  col.className = 'col-6 col-md-3';
+      const col = document.createElement('div');
+      col.className = 'col-6 col-md-3';
 
-  // Directly use the full image URL from product.image_url_1
-  col.innerHTML = `
-    <div class="product-card" data-product-id="${product.id}">
-      <img src="${product.image_url_1}" alt="${product.name}" class="img-fluid rounded mb-2" />
-      <div><strong>${product.name}</strong></div>
-      <div>₱${product.price}</div>
-      <button class="btn btn-sm btn-primary add-to-cart-btn mt-2">Add to Cart</button>
-    </div>`;
+      // Directly use the full image URL from product.image_url_1
+      col.innerHTML = `
+        <div class="product-card" data-product-id="${product.id}">
+          <img src="${product.image_url_1}" alt="${product.name}" class="img-fluid rounded mb-2" />
+          <div><strong>${product.name}</strong></div>
+          <div>₱${product.price}</div>
+          <button class="btn btn-sm btn-primary add-to-cart-btn mt-2">Add to Cart</button>
+        </div>`;
 
-  productGrid.appendChild(col);
-});
+      productGrid.appendChild(col);
+    });
+
+    // Cart icon redirect
+    document.getElementById("cartIcon").addEventListener("click", function() {
+      window.location.href = "buyer-cart.html"; 
+    });
 
     document.querySelectorAll('.product-card').forEach(card => {
       card.addEventListener('click', e => {
@@ -273,7 +283,7 @@
         const modalImage = document.getElementById('modalProductImage');
 
         function updateModalImage() {
-         modalImage.src = images[currentImageIndex];
+          modalImage.src = images[currentImageIndex];
         }
 
         document.getElementById('modalLeftArrow').onclick = () => {
@@ -309,50 +319,46 @@
     });
   }
 
-  async function addToCart(product) {
+ async function addToCart(product) {
     if (!currentUserId) {
-      alert('Please log in to add items to your cart.');
-      return;
+        alert('Please log in to add items to your cart.');
+        return;
     }
 
+    // Check if the product is already in the cart
     const { data: existingCart, error: fetchError } = await supabase
-      .from('carts')
-      .select('*')
-      .eq('product_id', product.id)
-      .eq('user_id', currentUserId)
-      .single();
+        .from('carts')
+        .select('*')
+        .eq('product_id', product.id)
+        .eq('user_id', currentUserId)
+        .single(); // We only expect one result
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Cart fetch error:', fetchError.message);
-      return;
+        console.error('Cart fetch error:', fetchError.message);
+        return;
     }
 
-    const currentQty = existingCart ? existingCart.quantity : 0;
-    if (currentQty >= product.stock) {
-      alert('You’ve reached the maximum stock limit for this item.');
-      return;
-    }
-
+    // Prevent adding the same product more than once
     if (existingCart) {
-      await supabase
-        .from('carts')
-        .update({ quantity: currentQty + 1 })
-        .eq('id', existingCart.id);
-    } else {
-      await supabase.from('carts').insert([ 
-        { product_id: product.id, user_id: currentUserId, quantity: 1, price: product.price }
-      ]);
+        alert('There is only one stock of the following item.');
+        return; // Don't allow adding again
     }
+
+    // If the product is not already in the cart, insert it with a quantity of 1
+    await supabase.from('carts').insert([ 
+        { product_id: product.id, user_id: currentUserId, quantity: 1, price: product.price }
+    ]);
 
     updateCartCount();
     alert('Product added to cart!');
-  }
+}
 
   async function updateCartCount() {
     if (!currentUserId) return;
     const { data, error } = await supabase
       .from('carts')
-      .select('quantity');
+      .select('quantity')
+      .eq('user_id', currentUserId);
 
     if (!error && data) {
       const total = data.reduce((sum, item) => sum + item.quantity, 0);
@@ -384,6 +390,7 @@
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await supabase.auth.signOut();
+      cartCount.textContent = '0'; // Reset cart count on logout
       window.location.href = 'index.html';
     });
   }

@@ -63,12 +63,41 @@
     .btn-checkout:hover {
       background-color: #00acc1;
     }
+
+    /* Checkout Popup Styles */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+    }
+    .popup-content {
+      background-color: #1f1f1f;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      width: 60%;
+      max-width: 500px;
+      color: white;
+    }
+    .close-btn {
+      font-size: 2rem;
+      color: white;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <!-- Navbar -->
   <nav class="navbar d-flex justify-content-between align-items-center">
-    <div class="navbar-brand">Silk</div>
+    <a class="navbar-brand" href="seller-dashboard.html">Silk</a>
     <div>
       <a href="buyer-dashboard.html" class="nav-link d-inline">Home</a>
       <a href="buyer-profile.html" class="nav-link d-inline">Profile</a>
@@ -88,6 +117,34 @@
     </div>
   </div>
 
+  <!-- Checkout Popup -->
+  <div id="checkoutPopup" class="popup">
+    <div class="popup-content">
+      <span class="close-btn" id="closePopupBtn">&times;</span>
+      <h2>Checkout Summary</h2>
+      <div id="cartItemsSummary"></div>
+      <h4>Total: ₱<span id="checkoutTotalDisplay">0</span></h4>
+      <form id="checkoutForm">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label for="paymentMethod">Payment Method</label>
+          <select id="paymentMethod" class="form-control" required>
+          <option value="cash">Cash</option>
+          <option value="gcash">GCash</option>
+        </select>
+        </div>
+        <button type="submit" class="btn btn-success">Confirm Order</button>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.0.0/dist/umd/supabase.min.js"></script>
   <script>
     const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
@@ -96,79 +153,208 @@
 
     const cartItemsContainer = document.getElementById('cartItems');
     const cartTotalDisplay = document.getElementById('cartTotal');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const checkoutPopup = document.getElementById('checkoutPopup');
+    const closePopupBtn = document.getElementById('closePopupBtn');
+    const checkoutTotalDisplay = document.getElementById('checkoutTotalDisplay');
+    const cartItemsSummary = document.getElementById('cartItemsSummary');
+    const checkoutForm = document.getElementById('checkoutForm');
 
     let currentUserId = null;
 
+    // Check if user is authenticated before loading cart
     async function checkAuth() {
-      const { data } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
       if (data?.user) {
         currentUserId = data.user.id;
         fetchCart();
       } else {
-        window.location.href = "index.html"; // redirect to login
+        window.location.href = "index.html"; 
       }
     }
 
+    // Fetch cart items from the 'carts' table, filtering by the current user's ID
     async function fetchCart() {
       const { data: cart, error } = await supabase
-        .from('cart')
-        .select('id, quantity, product_id, products(*)')
+        .from('carts')
+        .select('id, quantity, price, product_id, products(*)')
         .eq('user_id', currentUserId);
 
       if (error) {
-        console.error(error);
+        console.error('Error fetching cart:', error);
         return;
       }
 
-      displayCart(cart);
-    }
-
-    function displayCart(cartItems) {
-      cartItemsContainer.innerHTML = '';
-      let total = 0;
-
-      if (cartItems.length === 0) {
+      if (cart.length === 0) {
         cartItemsContainer.innerHTML = '<p class="text-muted">Your cart is empty.</p>';
         cartTotalDisplay.textContent = '0';
         return;
       }
+      cart.forEach(item => {
+    item.quantity = 1; // Set quantity to 1 for all items
+  });
 
+      displayCart(cart);
+    }
+
+    // Display cart items in the page
+    function displayCart(cartItems) {
+      cartItemsContainer.innerHTML = '';
+      let total = 0;
       cartItems.forEach(item => {
         const product = item.products;
-        const subtotal = item.quantity * product.price;
+        const subtotal = item.quantity * item.price;
         total += subtotal;
 
         const div = document.createElement('div');
         div.className = 'cart-item';
         div.innerHTML = `
           <img src="${product.image_url_1}" alt="${product.name}">
-          <div class="flex-grow-1">
+          <div>
             <h5>${product.name}</h5>
-            <p>₱${product.price} x ${item.quantity} = ₱${subtotal}</p>
+            <p>₱${item.price}</p>
+            <p>Quantity: ${item.quantity}</p>
+            <button class="btn btn-remove" data-cart-id="${item.id}">Remove</button>
           </div>
-          <button class="btn btn-remove" onclick="removeItem(${item.id})">Remove</button>
         `;
         cartItemsContainer.appendChild(div);
       });
 
-      cartTotalDisplay.textContent = total;
+      cartTotalDisplay.textContent = total.toFixed(2);  // Show total with 2 decimal places
+
+      // Attach event listener for 'Remove' button after cart items are added to the DOM
+      document.querySelectorAll('.btn-remove').forEach(button => {
+        button.addEventListener('click', async (event) => {
+          const cartItemId = event.target.dataset.cartId;
+          await removeFromCart(cartItemId);  // Call remove function
+        });
+      });
     }
 
-    async function removeItem(cartItemId) {
+    // Remove item from the cart
+    async function removeFromCart(cartItemId) {
       const { error } = await supabase
-        .from('cart')
+        .from('carts')
         .delete()
-        .eq('id', cartItemId);
+        .eq('id', cartItemId)
+        .eq('user_id', currentUserId);  // Ensuring only the logged-in user can remove from their cart
 
-      if (!error) {
-        fetchCart(); // reload cart
+      if (error) {
+        console.error('Error removing from cart:', error);
+        alert('Failed to remove item from cart.');
+      } else {
+        fetchCart();  // Refresh the cart after removal
       }
     }
 
-    document.getElementById('checkoutBtn').addEventListener('click', () => {
-      alert('Checkout is not yet implemented.');
+    // Show the checkout popup with cart summary
+    function showCheckoutPopup(cartItems, total) {
+      cartItemsSummary.innerHTML = '';
+      cartItems.forEach(item => {
+        const product = item.products;
+        const subtotal = item.quantity * item.price;
+        cartItemsSummary.innerHTML += `
+          <div>
+            <h5>${product.name}</h5>
+            <p>₱${item.price} x ${item.quantity}</p>
+            <p>Subtotal: ₱${subtotal.toFixed(2)}</p>
+          </div>
+        `;
+      });
+
+      checkoutTotalDisplay.textContent = total.toFixed(2);
+      checkoutPopup.style.display = 'flex';
+    }
+
+    // Handle checkout process
+    async function handleCheckout() {
+      const { data: cart, error } = await supabase
+        .from('carts')
+        .select('id, quantity, price, product_id, products(*)')
+        .eq('user_id', currentUserId);
+
+      if (error) {
+        console.error('Error fetching cart:', error);
+        return;
+      }
+
+      let total = 0;
+      cart.forEach(item => total += item.quantity * item.price);
+
+      // Show the checkout popup
+      showCheckoutPopup(cart, total);
+    }
+
+    // Confirm the order and save it in 'orders' table
+   checkoutForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const formData = new FormData(checkoutForm);
+  const name = formData.get('name');
+  const email = formData.get('email');
+  const paymentMethod = formData.get('paymentMethod');
+
+  // Fetch the cart data for the current user from the 'carts' table
+  const { data: cart, error: cartError } = await supabase
+    .from('carts') // Ensure 'carts' is the correct table name
+    .select('id, quantity, price, product_id, user_id') // Including user_id to check the type
+    .eq('user_id', currentUserId);
+
+  if (cartError) {
+    console.error('Error fetching cart:', cartError);
+    return;
+  }
+
+  if (!cart || cart.length === 0) {
+    console.error('No items in the cart');
+    alert('Your cart is empty. Please add items before checking out.');
+    return;
+  }
+
+  // Loop through the cart and insert the order data
+  for (const item of cart) {
+    const userUUID = item.user_id; // Ensure user_id is a UUID
+    const productUUID = item.product_id; // Ensure product_id is a UUID
+
+    const { error: insertError } = await supabase
+      .from('orders') // Ensure 'orders' is the correct table name
+      .insert([{
+        user_id: userUUID, // Ensure this is UUID
+        product_id: productUUID, // Ensure this is UUID
+        quantity: item.quantity,
+        total_price: item.quantity * item.price,
+        payment_method: paymentMethod,
+        status: 'pending',
+        name: name,
+        email: email
+      }]);
+
+    if (insertError) {
+      console.error('Error inserting order:', insertError);
+    }
+  }
+
+  // Clear the cart after order is placed
+  const { error: clearCartError } = await supabase
+    .from('carts') // Ensure 'carts' is the correct table name
+    .delete()
+    .eq('user_id', currentUserId);
+
+  if (clearCartError) {
+    console.error('Error clearing cart:', clearCartError);
+  }
+
+  alert('Order placed successfully!');
+  window.location.href = 'buyer-orders.html'; // Redirect to orders page
+});
+
+    // Event listeners
+    checkoutBtn.addEventListener('click', handleCheckout);
+    closePopupBtn.addEventListener('click', () => {
+      checkoutPopup.style.display = 'none';
     });
 
+    // On page load, check user authentication
     checkAuth();
   </script>
 </body>

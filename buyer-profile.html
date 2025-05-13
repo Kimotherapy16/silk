@@ -11,22 +11,21 @@
     const SUPABASE_URL = "https://dihzhshukgwduxatoyrj.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpaHpoc2h1a2d3ZHV4YXRveXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE3NTExMzEsImV4cCI6MjA1NzMyNzEzMX0.EuyuH4VVV92bb44-x59rs9id5eSNA-CU6guMkCP74Vc";
 
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function fetchUserData() {
+    async function checkAuthenticationAndFetchData() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
 
+      // If no user is logged in, redirect to index.html
       if (userError || !user) {
-        console.error("User not logged in", userError);
+        window.location.href = 'index.html'; // Redirect to login page
         return;
       }
 
-      // Set email
+      // User is logged in, proceed with fetching data
       const emailEl = document.getElementById("email");
       if (emailEl) emailEl.textContent = user.email;
 
-      // Fetch first name from custom 'users' table
       const { data, error } = await supabase
         .from('users')
         .select('first_name, last_name')
@@ -34,7 +33,7 @@
         .single();
 
       if (error) {
-        console.error("Error fetching first_name:", error.message);
+        console.error("Error fetching user data:", error.message);
         return;
       }
 
@@ -44,13 +43,11 @@
       const fullNameEl = document.getElementById("full-name");
       if (nameElement) {
         nameElement.textContent = data.first_name || "No name found";
-      } else {
-        console.warn("Element with id='first-name' not found in HTML.");
       }
     }
 
-    // Run when the module script loads
-    fetchUserData();
+    // Run when the page is loaded
+    checkAuthenticationAndFetchData();
   </script>
 
   <style>
